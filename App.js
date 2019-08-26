@@ -3,6 +3,7 @@ import React, { Component } from 'react';
 import MainPanel from './components/MainPanel';
 import AddClientContainer from './components/AddClientContainer';
 import ClientSummaryContainer from './components/ClientSummaryContainer';
+import Sessions from './components/Sessions';
 
 import {
 	ScrollView,
@@ -52,6 +53,33 @@ export default class App extends Component {
 	
 	//need a function onUpdateClient that works similar to onAddClient
 
+
+	updateClientSessionMinutes = (totalSessionMinutes, clientIndex) => {
+		Alert.alert(JSON.stringify(totalSessionMinutes));
+		// this.setState({totalSessionMinutes: totalSessionMinutes});
+
+
+
+		this.setState(state => {
+			const clients = state.CONTENT.map((item, j) => {
+				if (j === clientIndex) {
+					const newClient = item;
+					newClient.totalSessionMinutes = totalSessionMinutes;
+				} else {
+					return item;
+				}
+			});
+
+			return {
+				clients,
+			};
+		});
+
+
+
+
+	}
+
 	renderHeader = (section, _, isActive) => {
 		return (
 			<View
@@ -64,10 +92,14 @@ export default class App extends Component {
 		);
 	};
 	renderContent = (section, index, isActive, sections) => {
-		// alert(JSON.stringify(section));
+		
 		return (
-			
-			<ClientSummaryContainer totalMinutes={section.total}/>
+			 <View>
+				 <ClientSummaryContainer totalMinutes={section.total} totalSessionMinutes={section.totalSessionMinutes}/>
+				 {/* // SessionsContainer should go here.
+				 // This should be moved back to app.js and be renamed SessionsContainer.js */}
+				 <Sessions clientIndex={index} updateClientSessionMinutes={this.updateClientSessionMinutes} />
+			 </View>
 		)
 	}
 	render = () => {

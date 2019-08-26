@@ -3,52 +3,70 @@ import {TimePickerAndroid, Text, View, TouchableOpacity, Modal, StyleSheet, Text
 import {widthPercentageToDP as wp, heightPercentageToDP as hp} from '../node_modules/react-native-responsive-screen';
 import moment from "moment";
 import { CheckBox } from 'react-native-elements'
-import { Icon } from 'react-native-elements'
-// import CheckBox from '@react-native-community/checkbox';
 
-// const newClientSession = {
-// 	startTime: "undefined time",
-// 	endTime: "undefined time2"
-// }
-//this Sessions component should hold the sessions in its state just like the accordion holds the clients(collapsible's) in an array
-//I think maybe a function needs to be passed as a prop on the Session component to be used on the add Session button. 
-//The handler of the Session button will return the summed up sessions which should be stored in the Sessions component state.
-//Perhaps the individual sessions should be stateless components. Perhaps the sessions component will have a function 
-//(the aforementioned handler) that passes that handler as a prop to each stateless session component which calculates it's minutes.
-//On second thought, I probably have to have a state on each session in order to store the results of the timepickers. But the handler
-//sent to each session via its prop will still be used to calculate its minutes. This handler will probably be run when you click
-//save within the session modal. It'll save the start and end times and shouldn't let you save until you have both. Can probably do some
-//check right on the save button to enable/disable it if the times are undefined/--
-//Whereas in awesome project... at this moment we would calculate the minute difference here. There's no reason to here.
-///Instead need to return the start and end times to Sessions component to let it calculate the total minutes... then perhaps return
-//those minutes in the handler passed as a prop to the Sessions component to then be calculated in the default app component. That's
-//where the moment.js code will go to calc the difference. 
+import SessionsHeading from './SessionsHeading';
+import DeleteModeButtonContainer from './DeleteModeButtonContainer';
+import SessionsSelected from './SessionsSelected';
+import DeleteSelectedSessionsButtonContainer from './DeleteSelectedSessionsButtonContainer';
+import SessionsColumnHeadings from './SessionsColumnHeadings';
+import AddSessionButtonContainer from './AddSessionButtonContainer';
 
 class Sessions extends Component {
     constructor(props) {
         super(props);
         this.state = {
-			 clientSessionModalVisible: false,
             sessions: [],
 			deleteMode: false,
 			numSessionsSelected: 0
         };
     }
 
-
 	componentDidUpdate(prevProps, prevState, snapshot) {
+		if (this.state.deleteMode !== prevState.deleteMode) {
+			this.deselectAllSessions();
+		}
 	}
 
-	onAddClientSession = () => {
-		// this.setClientSessionModalVisible(true);
-		this.setState({sessions: this.state.sessions.concat({
-				startTime: 'SET START',
-				endTime: 'SET END',
-				selected: false
-			})
+	setDeleteMode = (deleteMode) => {
+		this.setState({deleteMode: deleteMode});
+	}
+
+	deselectAllSessions = () => {
+		this.setState(state => {
+			const sessions = state.sessions.map((item, j) => {
+				const newItem = item;
+				newItem.selected = false;
+				return newItem;
+			});
+			return {
+				sessions
+			};
 		});
 	}
+
+	updateSessions = (sessions) => {
+		this.setState({sessions: sessions});
+		Alert.alert('updating sessions');
+	}
+
+	//ABOVE GOOD AND SHOULD STAY IN SESSIONS COMPONENT
+
+
+	//This function will eventually be moved the the ComponentDidUpdate function of the "SessionContainer" component
+	//but modified heavily to increment or decrement the number of sessions in the SessionsContainer's state.
+	setNumSessionsSelected = () => {
+		let sessionsSelected = 0;
+		const sessions = this.state.sessions;
+		for (let i = 0; i < sessions.length; i++) {
+			if(sessions[i].selected) {
+				sessionsSelected++;
+			}
+		}
+		// Alert.alert("" + sessionsSelected);
+		this.setState({numSessionsSelected: sessionsSelected});
+	}
 	
+	// This should maybe be in a container component specifically for the android time pickers
 	onEditClientSession  = (sessionIndex, timeToUpdate, time) => {
 
 		this.setState(state => {
@@ -78,20 +96,6 @@ class Sessions extends Component {
 		});
 	}
 
-	deleteSelectedSessions = () => {
-		this.setState(state => {
-			const sessions = state.sessions.map((item, j) => {
-				if (!item.selected) {
-					return item;
-				}
-			});
-			return {
-				sessions
-			};
-		},() => {
-			// this.setState({ state: this.state });
-		});		
-	}
 
 
 	// onRemoveItem = i => {
@@ -105,14 +109,10 @@ class Sessions extends Component {
 	//   };
 
 
-	toggleDeleteMode = () => {
-		this.setState(previousState => ({deleteMode: !previousState.deleteMode}),() => {
-			if (this.state.deleteMode === false) {
-				this.deselectAllSessions();
-			}
-		});
-	}
 
+	//This should perhaps be in a Session component(although might do separate Session and EditSession components)
+	// This will be modified to not search through the sessions like this, but instead only care about toggling the selected state
+	//of the Session 
 	onSelectClientSession  = (sessionIndex) => {
 
 		this.setState(state => {
@@ -130,34 +130,27 @@ class Sessions extends Component {
 			};
 		},() => {
 			this.setNumSessionsSelected();
+			//I think each session will have its own "Session" component with probably a container component as well where I'll hold
+			//the fact it's selected. Along with the start and end time in the state. When that state changes... I'll run this
+			//setNumSessionsSelected function from the ComponentDidUpdate function of the Session (singular) component instead of doing
+			//a callback here. This function will be passed in as a prop from the Sessions (plural) component. ComponentDidUpdate will
+			//just do a check to see if the selected property in the state changed, and if so, call setNumSessionsSelected from parent
+			//Sessions
+
+			//Addendum: Here's the trick though. You'll be within a single Session(singular) component. Which means what I think I'll
+			//need to do is pass in the numSessionsSelected state from the Sessions component here as a prop into each Session
+			//component so that when it does the ComponentDidUpdate function... it can increment or decrement the numSessionsSelected
+			// depending on if a session is selected or deselected... then pass that number back up to the parent SessionsContainer
+			//(plural) component to update the numSessionsSelected state. There will need to be a simple update function in here
+			//for that just like when you update the sessions array.
 		});
 	}
 
-	deselectAllSessions = () => {
-		this.setState(state => {
-			const sessions = state.sessions.map((item, j) => {
-				const newItem = item;
-				newItem.selected = false;
-				return newItem;
-			});
-			return {
-				sessions
-			};
-		});
-	}
 
-	setNumSessionsSelected = () => {
-		let sessionsSelected = 0;
-		const sessions = this.state.sessions;
-		for (let i = 0; i < sessions.length; i++) {
-			if(sessions[i].selected) {
-				sessionsSelected++;
-			}
-		}
-		Alert.alert("" + sessionsSelected);
-		this.setState({numSessionsSelected: sessionsSelected});
-	}
 
+
+
+	//This should be in the SessionContainer (singular) Component and be calculated in the ComponentDidUpdate on start or end time change
 	getSessionMinutes = () => {
 		const sessions = this.state.sessions;
 		let allSessionMinutes = 0;
@@ -177,15 +170,18 @@ class Sessions extends Component {
 				allSessionMinutes += sessionMinutes;
 			}
 		}
-		this.props.updateClientSessionMinutes(allSessionMinutes);
+		this.props.updateClientSessionMinutes(allSessionMinutes, this.props.clientIndex);
 
 	}
 
+	//This should be in the SessionContainer (singular) Component and be calculated in the ComponentDidUpdate on start or end time change
 	calculateMinuteDifference = (startTime, endTime) => {
 		if (endTime.isBefore(startTime)) endTime.add(1, 'day');
 		const sessionMinutes = moment.duration(endTime.diff(startTime)).asMinutes();
 		return sessionMinutes;
 	}
+
+	//perhaps have a function that specifically handles what to put in start/endTime state to remove logic from html code 
 
 	areSessionTimesSet = (startTime, endTime) => {
 		return (this.isSessionTimeSet(startTime) && this.isSessionTimeSet(endTime) ? true : false);
@@ -268,89 +264,80 @@ class Sessions extends Component {
     render() {
 		return (
             <View>
-                <View style={styles.sessionHeading}>
-                    <Text style={styles.sessionHeadingText}>SESSIONS</Text>
-					<View style={{borderRadius:2,backgroundColor:'steelblue',padding:wp('1%'),margin:wp('1.1%'),marginRight:wp('3%')}}>
-						<TouchableOpacity onPress={this.toggleDeleteMode}>
-							<Text style={{color:'white',backgroundColor:'steelblue',fontSize:hp('2.2%'),padding:wp('1%')}}>Delete Mode</Text>
-						</TouchableOpacity>
-					</View>
-                </View>
-				{this.state.numSessionsSelected > 0 &&
-					<View style={{flexDirection: 'row', borderColor: 'steelblue', borderBottomWidth:1,justifyContent:'center',alignItems: 'center'}}>
-						<Text style={{color:'steelblue', fontWeight:'bold', fontFamily:'normal',fontSize:hp('2%'),margin:wp('3%')}}>{this.state.numSessionsSelected} SELECTED</Text>
-						<Icon name='delete' color='steelblue' onPress={this.deleteSelectedSessions}/>
-					</View>
-				}
-				<View style={styles.columnHeadings}>
-					<View style={styles.columnHeadingCount}>
-						<Text style={styles.columnHeadingText}>#</Text>
-					</View>
-					<View style={styles.columnHeadingTime}>
-						<Text style={styles.columnHeadingText}>START TIME</Text>
-					</View>
-					<View style={styles.columnHeadingTime}>
-						<Text style={styles.columnHeadingText}>END TIME</Text>
-					</View>
-					<View style={styles.columnHeadingMinutes}>
-						<Text style={styles.columnHeadingText}>MIN</Text>
-					</View>
-                </View>
-                <View style={styles.clientSessions}>
+				<SessionsHeading>
+					<DeleteModeButtonContainer deleteMode={this.state.deleteMode} setDeleteMode={this.setDeleteMode}/>
+				</SessionsHeading>
+				<SessionsSelected
+					visible={this.state.numSessionsSelected > 0}
+					numSessionsSelected={this.state.numSessionsSelected}
+				>
+					<DeleteSelectedSessionsButtonContainer sessions={this.state.sessions} updateSessions={this.updateSessions}/>
+				</SessionsSelected>
+				<SessionsColumnHeadings/>
 
-                    {this.state.sessions.map((item,index) => (
-						typeof item !== "undefined" &&
-							//NEED A BETTER KEY
-							//RIGHT HERE IS WHERE WE CAN CREATE AN EDIT BUTTON AND PASS THE INDEX TO EACH BUTTON
-							<View key={item+index} 
-							style={styles.clientSession} 
-							pointerEvents={this.state.deleteMode ? 'box-only' : 'auto'} 
-							onStartShouldSetResponder={() => this.state.deleteMode && this.onSelectClientSession(index)} 
-							onResponderTerminationRequest={() => (true)}
-							>
-								{!this.state.deleteMode &&
-									<View style={[styles.clientSessionColumn,styles.clientSessionCount]}>
-										<Text style={styles.clientSessionText}>{index + 1}</Text>
-									</View>
-								}
-								{this.state.deleteMode &&
-									<View style={[styles.clientSessionColumn,styles.clientSessionCountDeleteMode]}>
-										<View style={{flex:1}}>
-											<CheckBox containerStyle={styles.clientSessionCheckBox}
-												checked={item.selected}
-											/>
+				{/* Session Row Component */}
+                <View style={styles.clientSessions}>
+                    {
+						this.state.sessions.map((item,index) => (
+							typeof item !== "undefined" &&
+								//NEED A BETTER KEY
+								//RIGHT HERE IS WHERE WE CAN CREATE AN EDIT BUTTON AND PASS THE INDEX TO EACH BUTTON
+								<View key={item+index} 
+								style={styles.clientSession} 
+								pointerEvents={this.state.deleteMode ? 'box-only' : 'auto'} 
+								onStartShouldSetResponder={() => this.state.deleteMode && this.onSelectClientSession(index)} 
+								onResponderTerminationRequest={() => (true)}
+								>
+									{/* Session count */}
+									{!this.state.deleteMode &&
+										<View style={[styles.clientSessionColumn,styles.clientSessionCount]}>
+											<Text style={styles.clientSessionText}>{index + 1}</Text>
 										</View>
-										<View style={{flex:3}}>
-											<Text style={[styles.clientSessionText,{marginTop:3} ]}>{index + 1}</Text>
+									}
+									{/* Session count selected checkbox */}
+									{this.state.deleteMode &&
+										<View style={[styles.clientSessionColumn,styles.clientSessionCountDeleteMode]}>
+											<View style={{flex:1}}>
+												<CheckBox containerStyle={styles.clientSessionCheckBox}
+													checked={item.selected}
+												/>
+											</View>
+											<View style={{flex:3}}>
+												<Text style={[styles.clientSessionText,{marginTop:3} ]}>{index + 1}</Text>
+											</View>
 										</View>
-									</View>
-								}
-								<View style={[styles.clientSessionColumn,styles.clientSessionTimes]}>
-									<TouchableOpacity style={styles.clientSessionButton} 
-									onPress={this._onPressButton.bind(this, this.buildTimePickerEvent("start",index,item.startTime,item.endTime))}>
-									<Text style={[styles.clientSessionText, !this.state.deleteMode && styles.clientSessionTimesText, !this.isSessionTimeSet(item.startTime) && styles.clientSessionTextSmall]}>
-										{!this.isSessionTimeSet(item.startTime) ? item.startTime : item.startTime.format("LT")}
-									</Text>
-									</TouchableOpacity>
-								</View>
-								<View style={[styles.clientSessionColumn,styles.clientSessionTimes]}>
-									<TouchableOpacity 
-									style={styles.clientSessionButton} 
-									onPress={this._onPressButton.bind(this, this.buildTimePickerEvent("end",index,item.startTime,item.endTime))}>
-										<Text style={[styles.clientSessionText, !this.state.deleteMode && styles.clientSessionTimesText, !this.isSessionTimeSet(item.endTime) && styles.clientSessionTextSmall]}>
-											{!this.isSessionTimeSet(item.endTime) ? item.endTime : item.endTime.format("LT")}
+									}
+									{/* start time */}
+									<View style={[styles.clientSessionColumn,styles.clientSessionTimes]}>
+										<TouchableOpacity style={styles.clientSessionButton} 
+										onPress={this._onPressButton.bind(this, this.buildTimePickerEvent("start",index,item.startTime,item.endTime))}>
+										<Text style={[styles.clientSessionText, !this.state.deleteMode && styles.clientSessionTimesText, !this.isSessionTimeSet(item.startTime) && styles.clientSessionTextSmall]}>
+											{!this.isSessionTimeSet(item.startTime) ? item.startTime : item.startTime.format("LT")}
 										</Text>
-									</TouchableOpacity>
+										</TouchableOpacity>
+									</View>
+
+									{/* end time */}
+									<View style={[styles.clientSessionColumn,styles.clientSessionTimes]}>
+										<TouchableOpacity 
+										style={styles.clientSessionButton} 
+										onPress={this._onPressButton.bind(this, this.buildTimePickerEvent("end",index,item.startTime,item.endTime))}>
+											<Text style={[styles.clientSessionText, !this.state.deleteMode && styles.clientSessionTimesText, !this.isSessionTimeSet(item.endTime) && styles.clientSessionTextSmall]}>
+												{!this.isSessionTimeSet(item.endTime) ? item.endTime : item.endTime.format("LT")}
+											</Text>
+										</TouchableOpacity>
+									</View>
+
+									{/* minute difference */}
+									<View style={[styles.clientSessionColumn,styles.clientSessionMinDiff]}>
+											<Text style={styles.clientSessionText}>{item.startTime !== "SET START" && item.endTime !== "SET END" ? this.calculateMinuteDifference(item.startTime, item.endTime): "--"}</Text>
+									</View>
 								</View>
-								<View style={[styles.clientSessionColumn,styles.clientSessionMinDiff]}>
-										<Text style={styles.clientSessionText}>{item.startTime !== "SET START" && item.endTime !== "SET END" ? this.calculateMinuteDifference(item.startTime, item.endTime): "--"}</Text>
-								</View>
-							</View>
 						))
 					}
-                    <TouchableOpacity onPress={(index) => {this.onAddClientSession(index)}} style={styles.addSessionButton}>
-                        <Text style={styles.addSessionButtonText}>+ ADD SESSION +</Text>
-                    </TouchableOpacity>
+					{/* Add Session Button component */}
+					{/* THIS SHOULD NOT BE VISIBLE WHEN IN DELETE MODE */}
+                    <AddSessionButtonContainer sessions={this.state.sessions} updateSessions={this.updateSessions}/>
                 </View>
             </View>
         );
@@ -358,65 +345,18 @@ class Sessions extends Component {
 }
 
 const styles = StyleSheet.create({
-	//CONTAINER
-	container: {
-		flex: 1,
-		backgroundColor: 'white'
-	},
-	//NAVBAR
-	navBar: {
-		height: hp('7%'),
-		width: wp('100%'),
-		backgroundColor: 'steelblue',
-		elevation: 3,
-		justifyContent: 'center',
-		paddingLeft: wp('3%'),
-	},
-	navBarText: {
-		fontSize: hp('3.2%'),
-		fontWeight: 'bold',
-		color: 'white',
-		fontFamily: 'normal'	
-	},
-
-	//CLIENT HEADING
-	sessionHeading: {
-		// paddingLeft: wp('3%'),
-		// height:hp('6.9%'),
-		borderTopWidth: 1,
-		borderBottomWidth: 1,
-		borderColor: 'steelblue',
-		flexDirection: 'row',
-		justifyContent:'space-between',
-		alignItems: 'center'
-	},
-	sessionHeadingText: {
-		fontSize:hp('2.5%'),
-		color: 'steelblue',
-		fontWeight: 'bold',
-		fontFamily: 'normal',
-		margin:wp('3%')
-	},
-
-	//CLIENT SESSIONS
 	clientSessions: {
 		flexDirection: 'column',
-		// height: hp('10%')
-		
 	},
 	clientSession: {
 		flexDirection: 'row',
 		borderBottomWidth: 1,
 		borderColor: 'steelblue',
 		height: hp('10%')
-		// padding: wp('4%'),
 	},
 	clientSessionColumn: {
 		borderRightWidth: 1,
 		borderColor: 'steelblue',
-		// padding: wp('4%'),
-
-		// flex:1
 	},
 	clientSessionCheckBox: {
 		marginTop:0,
@@ -452,77 +392,21 @@ const styles = StyleSheet.create({
 		justifyContent:'center',
 		alignItems: 'center'
 	},
-	// clientSessionTimes: {
-	// 	justifyContent: 'center',
-	// 	alignItems: 'center',
-	// 	// padding: wp('4%'),
-	// 	flexDirection: 'row'
-	// },
 	clientSessionText: {
 		color: 'steelblue',
 		fontFamily: 'normal',
 		fontSize: hp('3%'),
 		fontWeight: 'bold',
 		textAlign: 'center',
-		// borderBottomWidth: 1,
-		// borderColor: 'steelblue'
 	},
 	clientSessionTextSmall: {
 		fontSize: hp('2.5%'),
-		// borderBottomWidth: 1,
-		// borderColor: 'steelblue'
 	},
 	clientSessionTimesText: {
 		borderBottomWidth: 1,
 		borderColor: 'steelblue'
 	},
 
-	addSessionButton: {
-		flex:1,
-		borderColor:'steelblue',
-		height:hp('10%'),
-		borderBottomWidth: 5,
-		borderTopWidth: 5,
-		justifyContent: 'center',
-		alignItems: 'center'
-	},
-	addSessionButtonText: {
-		fontFamily: 'normal',
-		fontSize:hp('3.2%'),
-		color:'steelblue',
-		fontWeight: 'bold',
-
-	},
-	columnHeadings: {
-		flexDirection: 'row',
-		borderBottomWidth: 1,
-		borderColor: 'steelblue'
-	},
-	columnHeadingCount: {
-		flex: 1,
-		justifyContent: 'center',
-		alignItems: 'center',
-		borderRightWidth: 1,
-		borderColor: 'steelblue',
-	},
-	columnHeadingTime: {
-		flex: 2,
-		justifyContent: 'center',
-		alignItems: 'center',
-		borderRightWidth: 1,
-		borderColor: 'steelblue',
-	},
-	columnHeadingMinutes: {
-		flex: 1,
-		justifyContent: 'center',
-		alignItems: 'center',
-		borderRightWidth: 1,
-		borderColor: 'steelblue',
-	},
-	columnHeadingText: {
-		fontSize: hp('2%'),
-		color: 'steelblue'
-	}
 });
 
 export default Sessions;

@@ -23,6 +23,7 @@ class AddClientContainer extends Component {
 			clientModalVisible: false,
 			newClient: {
 				total: 0,
+				totalSessionMinutes: 0
 				//INITIALS
 			}
         };
@@ -51,6 +52,7 @@ class AddClientContainer extends Component {
 	onSaveClient = () => {
 		this.props.onAddClient({
 			total: this.state.newClient.total,
+			totalSessionMinutes: this.state.newClient.totalSessionMinutes
 		});
 		this.setClientModalVisible(!this.state.clientModalVisible);
 		this.initializeNewClient();
@@ -64,7 +66,7 @@ class AddClientContainer extends Component {
 	initializeNewClient = () => {
 		this.setState(state => {
 			const updatedClient = state.newClient;
-			updatedClient.total = TextInputValue = 0;
+			updatedClient.total = 0;
 			
 			return updatedClient;
 		});
@@ -80,30 +82,30 @@ class AddClientContainer extends Component {
 	}
 }
 
-const styles = StyleSheet.create({
+// const styles = StyleSheet.create({
 
-	//ADD CLIENT
-	addClientContainer: {
-		height: hp('10%'),
-		flexDirection: 'column',
-		justifyContent: 'center',
-		alignItems: 'center',
-		borderBottomWidth: 1,
-		borderBottomColor: 'steelblue'
-	},
-	addClientButton: {
-		width: wp('60%'),
-		height: hp('7%'),
-		backgroundColor: 'steelblue',
-		justifyContent: 'center',
-		alignItems: 'center'
-	},
-	addClientButtonText: {
-		color: 'white',
-		fontSize: hp('3.2%'),
-		fontWeight: 'bold',
-		fontFamily: 'normal'
-	},
-});
+// 	//ADD CLIENT
+// 	addClientContainer: {
+// 		height: hp('10%'),
+// 		flexDirection: 'column',
+// 		justifyContent: 'center',
+// 		alignItems: 'center',
+// 		borderBottomWidth: 1,
+// 		borderBottomColor: 'steelblue'
+// 	},
+// 	addClientButton: {
+// 		width: wp('60%'),
+// 		height: hp('7%'),
+// 		backgroundColor: 'steelblue',
+// 		justifyContent: 'center',
+// 		alignItems: 'center'
+// 	},
+// 	addClientButtonText: {
+// 		color: 'white',
+// 		fontSize: hp('3.2%'),
+// 		fontWeight: 'bold',
+// 		fontFamily: 'normal'
+// 	},
+// });
 
 export default AddClientContainer;

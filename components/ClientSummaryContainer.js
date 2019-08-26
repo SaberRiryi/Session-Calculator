@@ -1,34 +1,32 @@
 import React, { Component } from 'react';
 import MainPanel from './MainPanel';
-import Sessions from './Sessions';
+
 import {Text, View, TouchableOpacity, StyleSheet, Modal, TextInput } from 'react-native';
 import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
 
 class ClientSummaryContainer extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-			totalSessionMinutes: 0
-        };
-	}
+    // constructor(props) {
+    //     super(props);
+    //     this.state = {
+	// 		totalSessionMinutes: 0
+    //     };
+	// }
 
-	updateClientSessionMinutes = totalSessionMinutes => {
-		this.setState({totalSessionMinutes: totalSessionMinutes});
-	}
+
 
 	calculateOvertime = () => {
-		if((this.props.totalMinutes - this.state.totalSessionMinutes) < 0) {
-			return Math.abs(this.props.totalMinutes - this.state.totalSessionMinutes)
+		if((this.props.totalMinutes - this.props.totalSessionMinutes) < 0) {
+			return Math.abs(this.props.totalMinutes - this.props.totalSessionMinutes)
 		} else {
 			return 0;
 		}
 	}
 
 	calculateRemaining = () => {
-		if((this.props.totalMinutes - this.state.totalSessionMinutes) < 0) {
+		if((this.props.totalMinutes - this.props.totalSessionMinutes) < 0) {
 			return 0;
 		} else {
-			return this.props.totalMinutes - this.state.totalSessionMinutes;
+			return this.props.totalMinutes - this.props.totalSessionMinutes;
 		}
 	}
 
@@ -40,11 +38,11 @@ class ClientSummaryContainer extends Component {
 				</View>
 				<View style={styles.clientSummary}>
 					<Text style={styles.clientSummaryText}>TOTAL: {this.props.totalMinutes} MIN</Text>
-					<Text style={styles.clientSummaryText}>SESSIONS: {this.state.totalSessionMinutes} MIN</Text>
+					<Text style={styles.clientSummaryText}>SESSIONS: {this.props.totalSessionMinutes} MIN</Text>
 					<Text style={styles.clientSummaryText}>REMAIN: {this.calculateRemaining()} MIN</Text>
 					<Text style={styles.clientSummaryText}>OVER: {this.calculateOvertime()} MIN</Text>
 				</View>
-				<Sessions updateClientSessionMinutes={this.updateClientSessionMinutes} />
+				
 			</View>
 		);
 	}
